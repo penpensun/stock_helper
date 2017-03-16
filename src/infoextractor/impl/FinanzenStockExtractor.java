@@ -161,7 +161,7 @@ public class FinanzenStockExtractor implements WebStockExtractor{
 	}
 
 	/**
-	 * This method parse the stock webpage and outputs the year array.
+	 * This method parses the stock webpage and outputs the year array.
 	 */
 	public float[] parseYearArray(){
 		float[] yearArray;
@@ -208,6 +208,14 @@ public class FinanzenStockExtractor implements WebStockExtractor{
 		return yearArray;
 	}
 
+	
+	/**
+	 * This method parses the stock webpage for 
+	 * @return
+	 */
+	public float[] parseEquity(){
+		
+	}
 
 
 	@Override
