@@ -317,19 +317,23 @@ class FinanzenWebpageParser{
 	}
 	
 	public float[] parseEbit(Element tbody){
-		
+		float[] ebit = null;
+		return ebit;
 	}
 	
 	public float[] parsePriceArray(Element tbody){
-		
+		float[] prices = null;
+		return prices;
 	}
 	
 	public float[] parseEmployeeNum(Element tbody){
-		
+		float[] employNum = null;
+		return employNum;
 	}
 	
 	public int[] parseYears(Element tbody){
-		
+		int years[] = null;
+		return years;
 	}
 
 
