@@ -6,11 +6,12 @@ import org.junit.Test;
 import org.junit.*;
 
 public class FinanzenStockExtractorTest {
-	String url = "C:\\Users\\GGTTF\\Downloads\\WIRECARD Bilanz GuV _ Kennzahlen _ Umsatz _ Gewinn _ finanzen.net.htm";
-	FinanzenStockExtractor fse = null;
+	protected static String url = "http://www.finanzen.net/bilanz_guv/Wirecard";
+	protected static FinanzenStockExtractor fse = null;
 	
-	public FinanzenStockExtractorTest(){
-		System.out.println("Constructor starts.");
+	
+	@BeforeClass
+	public static void preparseWebpage(){
 		fse = new FinanzenStockExtractor();
 		fse.parseWebpage(url);
 	}

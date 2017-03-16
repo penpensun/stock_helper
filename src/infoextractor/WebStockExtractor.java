@@ -9,8 +9,8 @@ public interface WebStockExtractor {
 	public float[] getEquity();
 	public float[] getEbit();
 	public float[] getEmployeeNum();
-	public float[] getPriceArray();
-	public int[] getYearArray();
+	public float[] getPrices();
+	public int[] getYears();
 	
 	public Stock getStockObj();
 	
