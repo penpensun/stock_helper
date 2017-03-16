@@ -8,6 +8,10 @@ import java.net.MalformedURLException;
 import java.io.*;
 import org.jsoup.select.*;
 import java.util.ArrayList;
+import java.net.URLConnection;
+import java.net.HttpURLConnection;
+import java.net.Proxy;
+import java.net.InetSocketAddress;
 
 /**
  * This class extracts the content of the GuV webpage.
@@ -44,7 +48,7 @@ public class FinanzenStockExtractor implements WebStockExtractor{
 	 * @return: void
 	 */
 	@Override
-	public void parseWebpage(String url){
+	public void parseWebpage(String url){	
 		
         try{
             webStockDoc = Jsoup.connect(url).get();
@@ -334,6 +338,13 @@ class FinanzenWebpageParser{
 	public int[] parseYears(Element tbody){
 		int years[] = null;
 		return years;
+	}
+	
+	
+	public void testConnect(){
+		URL testUrl = new URL("www.google.com");
+		Proxy p = new Proxy(Proxy.Type.HTTP, new InetSocketAddress());
+		HttpURLConnection uc = (HttpURLConnection)
 	}
 
 
