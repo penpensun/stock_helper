@@ -1,5 +1,4 @@
 package infoextractor.impl;
-import infoextractor.WebStockExtractor;
 import structure.Stock;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.*;
@@ -7,6 +6,8 @@ import java.net.URL;
 import java.net.MalformedURLException;
 import java.io.*;
 import org.jsoup.select.*;
+import org.stockhelper.quantdataextractor.WebStockExtractor;
+
 import java.util.ArrayList;
 import java.net.URLConnection;
 import java.net.HttpURLConnection;
@@ -38,11 +39,10 @@ public class FinanzenStockExtractor implements WebStockExtractor{
 	// the list of "tbody" elements on the webpage.
 	ArrayList<Element> tbodyList;
 	
-	private float[] revenue;
-	private float[] equity;
-	private float[] ebit;
-	private float[] employeeNum;
-	private int[] years;
+	private float[] revenue; // Umsatzloese
+	private float[] ebit; // Operatives Ergebnis
+	private int[] employeeNum; // Anzahl Mitarbeiter
+	private int[] years; // The years
 	private float[] prices;
 
 	/**
@@ -51,7 +51,6 @@ public class FinanzenStockExtractor implements WebStockExtractor{
 	 * @param url: The url of the website
 	 * @return: void
 	 */
-	@Override
 	public void parseWebpage(String urlString){	
 		//User HttpURLConnection to connect to the webpage
 		URL url = null;
@@ -64,7 +63,7 @@ public class FinanzenStockExtractor implements WebStockExtractor{
 		//Init the proxy
 		Proxy proxy = new Proxy(Proxy.Type.HTTP, new InetSocketAddress("10.185.190.100", 8080));
 		
-		
+		// Get the connection
 		HttpURLConnection urlConn = null;
 		try{
 			urlConn = (HttpURLConnection)url.openConnection(proxy);
@@ -102,7 +101,6 @@ public class FinanzenStockExtractor implements WebStockExtractor{
         tbodyList = new ArrayList<>();
         // For each contentBoxList, get the tbody element 
         for(Element contentBox: contentBoxList){
-        	
         	// For each contentBox element, we extract the tbody element.
         	Element tbody = webpageExtractor.extractTbodyElement(contentBox);
         	// Put the tbody element into the list
@@ -112,30 +110,32 @@ public class FinanzenStockExtractor implements WebStockExtractor{
         Element tbodyElement = null;
         
         // Parse the revenue.
-        // The revenue is in the three tbody
+        // The revenue is in the third tbody
         tbodyElement = tbodyList.get(2);
         revenue = webpageParser.parseRevenue(tbodyElement);
         
-        // Parse the equity 
+        // Parse the years 
+        // year can be found in any tbody
         tbodyElement = tbodyList.get(1);
         years = webpageParser.parseYears(tbodyElement);
+        
+        // Parse the ebit
+        // ebit is in the third tbody
+        tbodyElement = tbodyList.get(2);
+        ebit = webpageParser.parseEbit(tbodyElement);
+        
+        // Parse the employee number
+        // The employee number can be found in the fifth tbody.
+        tbodyElement = tbodyList.get(4);
+        employeeNum = webpageParser.parseEmployeeNum(tbodyElement);
 	}
+
 	
-	
-	
-	public Stock initStockObj(){
-		Stock s = null;
-		return s;
-	}
-	
-	
-	
+	/**
+	 * This method returns the revenue
+	 */
 	public float[] getRevenue() {
 		return revenue;
-	}
-	
-	public float[] getEquity() {
-		return equity;
 	}
 
 	public float[] getEbit() {
@@ -143,7 +143,7 @@ public class FinanzenStockExtractor implements WebStockExtractor{
 	}
 
 
-	public float[] getEmployeeNum() {
+	public int[] getEmployeeNum() {
 		return employeeNum;
 	}
 
@@ -159,6 +159,7 @@ public class FinanzenStockExtractor implements WebStockExtractor{
 		// TODO Auto-generated method stub
 		return null;
 	}
+
 
 	/**
 	 * This method parses the stock webpage and outputs the year array.
@@ -208,22 +209,6 @@ public class FinanzenStockExtractor implements WebStockExtractor{
 		return yearArray;
 	}
 
-	
-	/**
-	 * This method parses the stock webpage for 
-	 * @return
-	 */
-	public float[] parseEquity(){
-		
-	}
-
-
-	@Override
-	public Stock getStockObj() {
-		// TODO Auto-generated method stub
-		return null;
-	}
-	
 
 
 	/**
@@ -381,9 +366,10 @@ class FinanzenWebpageParser{
 		float[] revenue = new float[tdElements.size()-2];
 		// Starting from the third element, start parsing the revenue
 		for(int i=0;i<revenue.length;i++){
-			String revenueText = tdElements.get(i+2).text();
-			revenueText = revenueText.replaceAll(",", ".");
-			revenue[i] = Float.parseFloat(revenueText);
+			String revenueString = tdElements.get(i+2).text();
+			revenueString = revenueString.replaceAll("\\.", "");
+			revenueString = revenueString.replaceAll(",", "\\.");
+			revenue[i] = Float.parseFloat(revenueString);
 		}
 		return revenue;
 	}
@@ -414,7 +400,7 @@ class FinanzenWebpageParser{
 	}
 	
 	/**
-	 * Ebit. German word: Umsatzloese
+	 * Ebit. German word: Operatives Ergebnis
 	 * @param tbody
 	 * @return
 	 */
@@ -422,8 +408,8 @@ class FinanzenWebpageParser{
 		// Get the tr element list
 		ArrayList<Element> trElements = tbody.getElementsByTag("tr");
 		
-		// The EBIT (Umsatzerloese) is in the second row.
-		Element ebitTr = trElements.get(1);
+		// The EBIT (Operative Ergebnis) is in the 6th row.
+		Element ebitTr = trElements.get(5);
 		
 		// Get the list of td
 		ArrayList<Element> tdElements = ebitTr.getElementsByTag("td");
@@ -431,12 +417,14 @@ class FinanzenWebpageParser{
 		// Starting from the third element, start parsing the ebits;
 		for(int i=0;i<ebit.length;i++){
 			String ebitTextString = tdElements.get(i+2).text();
+			ebitTextString = ebitTextString.replaceAll("\\.", "");
+			ebitTextString = ebitTextString.replaceAll(",", "\\.");
 			ebit[i] = Float.parseFloat(ebitTextString);
 		}
 		return ebit;
 	}
 	
-	public float[] parsePriceArray(Element tbody){
+	public float[] parsePrices(Element tbody){
 		float[] prices = null;
 		return prices;
 	}
@@ -458,15 +446,13 @@ class FinanzenWebpageParser{
 		int[] employNum = new int[tdElements.size()-2];
 		//Starting from the third element, start parsing the employNum
 		for(int i=0;i<employNum.length;i++){
-			
+			String employNumString  = tdElements.get(i+2).text();
+			employNumString = employNumString.replaceAll("\\.", "");
+			employNum[i] = Integer.parseInt(employNumString);
 		}
 		return employNum;
 	}
 	
-	
-	
-
-
 }
 
 
