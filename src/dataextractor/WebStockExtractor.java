@@ -1,4 +1,4 @@
-package infoextractor;
+package dataextractor;
 import structure.Stock;
 
 
