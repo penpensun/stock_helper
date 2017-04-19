@@ -6,7 +6,9 @@ import java.net.URL;
 import java.net.MalformedURLException;
 import java.io.*;
 import org.jsoup.select.*;
+
 import org.stockhelper.quantdataextractor.WebStockExtractor;
+
 
 import java.util.ArrayList;
 import java.net.URLConnection;
