@@ -1,4 +1,4 @@
-package infoextractor.impl;
+package org.stockhelper.quantdataextractor.impl;
 
 import static org.junit.Assert.*;
 

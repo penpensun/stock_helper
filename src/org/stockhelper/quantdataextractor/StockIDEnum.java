@@ -1,4 +1,4 @@
-package dataextractor;
+package org.stockhelper.quantdataextractor;
 
 public enum StockIDEnum {
 	NAME,
