@@ -7,9 +7,18 @@ import java.net.MalformedURLException;
 import java.io.*;
 import org.jsoup.select.*;
 
-import dataextractor.WebStockExtractor;
+import org.stockhelper.quantdataextractor.WebStockExtractor;
+
 
 import java.util.ArrayList;
+import java.net.URLConnection;
+import java.net.HttpURLConnection;
+import java.net.Proxy;
+import java.net.InetSocketAddress;
+import java.net.MalformedURLException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.BufferedReader;
 
 /**
  * This class extracts the content of the GuV webpage.
@@ -32,11 +41,10 @@ public class FinanzenStockExtractor implements WebStockExtractor{
 	// the list of "tbody" elements on the webpage.
 	ArrayList<Element> tbodyList;
 	
-	private float[] revenue;
-	private float[] equity;
-	private float[] ebit;
-	private float[] employeeNum;
-	private int[] years;
+	private float[] revenue; // Umsatzloese
+	private float[] ebit; // Operatives Ergebnis
+	private int[] employeeNum; // Anzahl Mitarbeiter
+	private int[] years; // The years
 	private float[] prices;
 
 	/**
@@ -45,14 +53,45 @@ public class FinanzenStockExtractor implements WebStockExtractor{
 	 * @param url: The url of the website
 	 * @return: void
 	 */
-	@Override
-	public void parseWebpage(String url){
+	public void parseWebpage(String urlString){	
+		//User HttpURLConnection to connect to the webpage
+		URL url = null;
+		try{
+			url = new URL(urlString);
+		}catch(MalformedURLException e){
+			e.printStackTrace();
+		}
 		
-        try{
-            webStockDoc = Jsoup.connect(url).get();
-        }catch(IOException e){
-            e.printStackTrace();
-        }
+		//Init the proxy
+		Proxy proxy = new Proxy(Proxy.Type.HTTP, new InetSocketAddress("10.185.190.100", 8080));
+		
+		// Get the connection
+		HttpURLConnection urlConn = null;
+		try{
+			urlConn = (HttpURLConnection)url.openConnection(proxy);
+		}catch(IOException e){
+			e.printStackTrace();
+		}
+		//Read the webpage into a StingBuilder
+		StringBuilder webpageStrBuilder = new StringBuilder();
+		BufferedReader br = null;
+		try{
+			br = new BufferedReader(new InputStreamReader(urlConn.getInputStream()));
+		}catch(IOException e){
+			e.printStackTrace();
+		}
+		String line= null;
+		try{
+			while((line =br.readLine())!= null)
+				webpageStrBuilder.append(line).append("\n");
+		}catch(IOException e){
+			e.printStackTrace();
+		}
+		
+		
+		//Parse the webpage by Jsoup
+        webStockDoc = Jsoup.parse(webpageStrBuilder.toString());
+        
         
         //Init FinanzenWebpageExtractor
         FinanzenWebpageExtractor webpageExtractor = new FinanzenWebpageExtractor();
@@ -64,7 +103,6 @@ public class FinanzenStockExtractor implements WebStockExtractor{
         tbodyList = new ArrayList<>();
         // For each contentBoxList, get the tbody element 
         for(Element contentBox: contentBoxList){
-        	
         	// For each contentBox element, we extract the tbody element.
         	Element tbody = webpageExtractor.extractTbodyElement(contentBox);
         	// Put the tbody element into the list
@@ -74,30 +112,32 @@ public class FinanzenStockExtractor implements WebStockExtractor{
         Element tbodyElement = null;
         
         // Parse the revenue.
-        // The revenue is in the three tbody
+        // The revenue is in the third tbody
         tbodyElement = tbodyList.get(2);
         revenue = webpageParser.parseRevenue(tbodyElement);
         
-        // Parse the equity 
+        // Parse the years 
+        // year can be found in any tbody
         tbodyElement = tbodyList.get(1);
-        years = webpageParser.parseYear(tbodyElement);
+        years = webpageParser.parseYears(tbodyElement);
+        
+        // Parse the ebit
+        // ebit is in the third tbody
+        tbodyElement = tbodyList.get(2);
+        ebit = webpageParser.parseEbit(tbodyElement);
+        
+        // Parse the employee number
+        // The employee number can be found in the fifth tbody.
+        tbodyElement = tbodyList.get(4);
+        employeeNum = webpageParser.parseEmployeeNum(tbodyElement);
 	}
+
 	
-	
-	
-	public Stock initStockObj(){
-		Stock s = null;
-		return s;
-	}
-	
-	
-	
+	/**
+	 * This method returns the revenue
+	 */
 	public float[] getRevenue() {
 		return revenue;
-	}
-	
-	public float[] getEquity() {
-		return equity;
 	}
 
 	public float[] getEbit() {
@@ -105,25 +145,26 @@ public class FinanzenStockExtractor implements WebStockExtractor{
 	}
 
 
-	public float[] getEmployeeNum() {
+	public int[] getEmployeeNum() {
 		return employeeNum;
 	}
 
 	@Override
-	public int[] getYearArray() {
+	public int[] getYears() {
 		
 		return years;
 	}
 
 
 	@Override
-	public float[] getPriceArray() {
+	public float[] getPrices() {
 		// TODO Auto-generated method stub
 		return null;
 	}
 
+
 	/**
-	 * This method parse the stock webpage and outputs the year array.
+	 * This method parses the stock webpage and outputs the year array.
 	 */
 	public float[] parseYearArray(){
 		float[] yearArray;
@@ -172,15 +213,52 @@ public class FinanzenStockExtractor implements WebStockExtractor{
 
 
 
-	@Override
-	public Stock getStockObj() {
-		// TODO Auto-generated method stub
-		return null;
+	/**
+	 * A test method to test the proxy in java connection.
+	 * 
+	 * test successful
+	 */
+	public void testConnect(){
+		URL testUrl = null;
+		try{
+			testUrl = new URL("http://www.finanzen.net/aktien/Wirecard-Aktie");
+		}catch(MalformedURLException e){
+			e.printStackTrace();
+		}
+		Proxy p = new Proxy(Proxy.Type.HTTP, new InetSocketAddress("10.185.190.100", 8080));
+		HttpURLConnection uc = null;
+		try{
+			uc = (HttpURLConnection)testUrl.openConnection(p);
+			//uc = (HttpURLConnection)testUrl.openConnection();
+			uc.connect();
+		}catch(IOException e){
+			e.printStackTrace();
+		}
+		
+		//Open a inputstream to get the http content
+		String line = null;
+		StringBuilder webContentTmp = new StringBuilder();
+		BufferedReader br = null;
+		try{
+			br = new BufferedReader(new InputStreamReader(uc.getInputStream()));
+		}catch(IOException e){
+			e.printStackTrace();
+		}
+		
+		try{
+		while((line = br.readLine())!= null){
+			webContentTmp.append(line).append("\n");
+		}
+		}catch(IOException e){
+			e.printStackTrace();
+		}
+		
+		System.out.println(webContentTmp.toString());
 	}
-	
+
 	
 	public static void main(String args[]){
-		
+		new FinanzenStockExtractor().testConnect();
 	}
 
 }
@@ -261,6 +339,9 @@ class FinanzenWebpageExtractor{
     	
     	return tbodyElementList.get(0);
 	}
+
+
+	
 }
 
 /**
@@ -287,9 +368,10 @@ class FinanzenWebpageParser{
 		float[] revenue = new float[tdElements.size()-2];
 		// Starting from the third element, start parsing the revenue
 		for(int i=0;i<revenue.length;i++){
-			String revenueText = tdElements.get(i+2).text();
-			revenueText = revenueText.replaceAll(",", ".");
-			revenue[i] = Float.parseFloat(revenueText);
+			String revenueString = tdElements.get(i+2).text();
+			revenueString = revenueString.replaceAll("\\.", "");
+			revenueString = revenueString.replaceAll(",", "\\.");
+			revenue[i] = Float.parseFloat(revenueString);
 		}
 		return revenue;
 	}
@@ -300,46 +382,79 @@ class FinanzenWebpageParser{
 	 * @param tbody
 	 * @return
 	 */
-	public int[] parseYear(Element tbody){
+	public int[] parseYears(Element tbody){
 		// Get the tr element list
 		ArrayList<Element> trElements = tbody.getElementsByTag("tr");
 		// The years are in the first row.
 		Element yearTr = trElements.get(0);
 		
 		// Get the list of td
-		ArrayList<Element> tdElements = yearTr.getElementsByTag("td");
+		ArrayList<Element> tdElements = yearTr.getElementsByTag("th");
+		System.out.println(tdElements.size());
 		int[] years = new int[tdElements.size()-2];
-		// Starting from the third element, start parsing the years
+		// Starting from the third element, start parsing the years.
 		for(int i=0;i<years.length;i++){
-			String yearText = tdElements.get(i+2).text();
-			years[i] = Integer.parseInt(yearText);
+			String yearTextString = tdElements.get(i+2).text();
+			years[i] = Integer.parseInt(yearTextString);
 		}
 		
 		return years;
 	}
 	
+	/**
+	 * Ebit. German word: Operatives Ergebnis
+	 * @param tbody
+	 * @return
+	 */
 	public float[] parseEbit(Element tbody){
-		float[] ebit = null;
+		// Get the tr element list
+		ArrayList<Element> trElements = tbody.getElementsByTag("tr");
+		
+		// The EBIT (Operative Ergebnis) is in the 6th row.
+		Element ebitTr = trElements.get(5);
+		
+		// Get the list of td
+		ArrayList<Element> tdElements = ebitTr.getElementsByTag("td");
+		float[] ebit = new float[tdElements.size()-2];
+		// Starting from the third element, start parsing the ebits;
+		for(int i=0;i<ebit.length;i++){
+			String ebitTextString = tdElements.get(i+2).text();
+			ebitTextString = ebitTextString.replaceAll("\\.", "");
+			ebitTextString = ebitTextString.replaceAll(",", "\\.");
+			ebit[i] = Float.parseFloat(ebitTextString);
+		}
 		return ebit;
 	}
 	
-	public float[] parsePriceArray(Element tbody){
+	public float[] parsePrices(Element tbody){
 		float[] prices = null;
 		return prices;
 	}
 	
-	public float[] parseEmployeeNum(Element tbody){
-		float[] employNum = null;
+	/**
+	 * This method receives the tbody element, parses the tbody element and returns the
+	 * integer array of employee numbers;
+	 * @param tbody
+	 * @return
+	 */
+	public int[] parseEmployeeNum(Element tbody){
+		// Get the tr element list
+		ArrayList<Element> trElements = tbody.getElementsByTag("tr");
+		// The employ number (Anzahl Mitarbeiter) is in the 8th row
+		Element employeeNumTr = trElements.get(7);
+		
+		//Get the list of td
+		ArrayList<Element> tdElements = employeeNumTr.getElementsByTag("td");
+		int[] employNum = new int[tdElements.size()-2];
+		//Starting from the third element, start parsing the employNum
+		for(int i=0;i<employNum.length;i++){
+			String employNumString  = tdElements.get(i+2).text();
+			employNumString = employNumString.replaceAll("\\.", "");
+			employNum[i] = Integer.parseInt(employNumString);
+		}
 		return employNum;
 	}
 	
-	public int[] parseYears(Element tbody){
-		int years[] = null;
-		return years;
-	}
-
-
-
 }
 
 
