@@ -3,7 +3,8 @@ package structure;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.*;
 import org.jsoup.select.Elements;
-
+import java.util.Map.Entry;
+import java.util.AbstractMap.SimpleEntry;
 
 import java.io.IOException;
 import java.text.NumberFormat;
