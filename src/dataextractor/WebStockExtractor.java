@@ -14,4 +14,5 @@ public interface WebStockExtractor {
 	
 	public Stock getStockObj();
 	
+	public void updateCompanyInfo(String id, StockIDEnum idType);
 }
