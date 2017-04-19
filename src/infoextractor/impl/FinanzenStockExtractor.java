@@ -1,5 +1,4 @@
 package infoextractor.impl;
-import infoextractor.WebStockExtractor;
 import structure.Stock;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.*;
@@ -7,6 +6,9 @@ import java.net.URL;
 import java.net.MalformedURLException;
 import java.io.*;
 import org.jsoup.select.*;
+
+import dataextractor.WebStockExtractor;
+
 import java.util.ArrayList;
 
 /**

@@ -1,4 +1,4 @@
-package infoextractor;
+package dataextractor;
 import structure.Stock;
 
 
@@ -14,4 +14,5 @@ public interface WebStockExtractor {
 	
 	public Stock getStockObj();
 	
+	public void updateCompanyInfo(String id, StockIDEnum idType);
 }
