@@ -2,7 +2,7 @@ package org.stockhelper.quantdataextractor;
 import structure.Stock;
 
 
-public interface WebStockExtractor {
+public interface QuantDataMiner {
 	public void parseWebpage(String urlString);
 	public float[] getRevenue();
 	public float[] getEbit();
