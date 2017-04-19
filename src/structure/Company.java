@@ -9,26 +9,17 @@ import java.util.AbstractMap.SimpleEntry;
 import java.io.IOException;
 import java.text.NumberFormat;
 import java.util.Locale;
+import java.util.Map;
+import java.util.List;
+import java.util.ArrayList;
+import java.time.YearMonth;
 
-
-public class Stock {
-	private float[] revenue; 
-	private float[] equity;
-	private float[] ebit;
-	private float[] employeeNum;
-	private float[] priceArray;
-	private float[] yearArray;
-	
-	
-	public float[] getRevenue(){
-		return revenue;
-	}
-	public float[] getPriceArray() {
-		return priceArray;
-	}
-	public void setPriceArray(float[] priceArray) {
-		this.priceArray = priceArray;
-	}
+public class Company {
+	private List<Map.Entry<YearMonth,Float>> revenue;
+	private List<Map.Entry<YearMonth, Float>> kgv;
+	private List<Map.Entry<YearMonth, Float>> ebit;
+	private List<Map.Entry<YearMonth, Integer>> employeeNum;
+	private List<Map.Entry<YearMonth, Float>> totalAsset;
 	
 	public void parseWebpage(String url){
 		System.out.println(url);

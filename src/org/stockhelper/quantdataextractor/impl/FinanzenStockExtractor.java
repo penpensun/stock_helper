@@ -1,5 +1,5 @@
 package org.stockhelper.quantdataextractor.impl;
-import structure.Stock;
+import structure.Company;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.*;
 import java.net.URL;

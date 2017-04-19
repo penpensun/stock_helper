@@ -11,7 +11,7 @@ import java.net.MalformedURLException;
 import java.io.*;
 import org.jsoup.select.*;
 
-import structure.Stock;
+import structure.Company;
 /**
  * This class test the parser of jsoup. The parser is resposible to extract stock information from http://www.finanzen.net/bilanz_guv/Wirecard
  * @author GGTTF
@@ -74,16 +74,16 @@ public class testParser {
         for(int i=0;i<yearList.size();i++)
             System.out.println("Year:  "+yearList.get(i).text());
         
-        //The second row contains the "Ergebnis je Aktie (unverwässert, nach Steurn)"
+        //The second row contains the "Ergebnis je Aktie (unverwï¿½ssert, nach Steurn)"
         Elements eps1ElementList = trElementList.get(1).getElementsByTag("td");
         
-        //Output the "Ergebnis je Aktie (unverwässert, nach Steurn)"
+        //Output the "Ergebnis je Aktie (unverwï¿½ssert, nach Steurn)"
         for(int i=0;i<eps1ElementList.size();i++)
             System.out.println("Ergebnis je Aktie (unverwaessert, nach Steurn): "+eps1ElementList.get(i).text());
         
-        //The third row contains the "Ergebnis je Aktie (verwässert, nach Steurn)"
+        //The third row contains the "Ergebnis je Aktie (verwï¿½ssert, nach Steurn)"
         Elements eps2ElementList = trElementList.get(2).getElementsByTag("td");
-         //Output the "Ergebnis je Aktie (verwässert, nach Steurn)"
+         //Output the "Ergebnis je Aktie (verwï¿½ssert, nach Steurn)"
         for(int i=0;i<eps2ElementList.size();i++)
             System.out.println("Ergebnis je Aktie (verwaessert, nach Steurn): "+eps2ElementList.get(i).text());
        
@@ -91,7 +91,7 @@ public class testParser {
     }
     
     public void testExtractRevenue(){
-    	Stock s = new Stock();
+    	Company s = new Company();
     	String url = "http://www.finanzen.net/bilanz_guv/Wirecard";
     	//url = "http://www.google.com";
     	s.parseWebpage(url);

@@ -1,5 +1,5 @@
 package org.stockhelper.quantdataextractor;
-import structure.Stock;
+import structure.Company;
 
 
 public interface QuantDataMiner {
