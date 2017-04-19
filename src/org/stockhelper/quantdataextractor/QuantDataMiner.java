@@ -7,6 +7,4 @@ public interface QuantDataMiner {
 	public float[] getRevenue();
 	public float[] getEbit();
 	public int[] getEmployeeNum();
-	public float[] getPrices();
-	public int[] getYears();
 }
