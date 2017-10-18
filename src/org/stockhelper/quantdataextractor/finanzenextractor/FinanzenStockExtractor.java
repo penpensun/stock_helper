@@ -133,6 +133,19 @@ public class FinanzenStockExtractor implements QuantDataMiner{
 	}
 
 	/**
+	 * This method retrieves the content of the webpage with given url
+	 * and returns a string.
+	 * First, this method will check whether the current network environment is:
+	 * 1. inside Bayer intranetwork, or 
+	 * 2. in "outer" internet.
+	 * @param url
+	 * @return
+	 */
+	public String retrieveWebpage(String url){
+		// Check if in outer internet.
+		
+	}
+	/**
 	 * This method parses the webpage content, assigns values to:
 	 * revenue,
 	 * ebit,
@@ -142,8 +155,49 @@ public class FinanzenStockExtractor implements QuantDataMiner{
 	 * 
 	 * @param strWebpageContent
 	 */
-	public void parseWebpage2(String strWebpageContent){
-		
+	protected void parseWebpage2(String strWebpageContent){
+
+		//Parse the webpage by Jsoup
+        webStockDoc = Jsoup.parse(strWebpageContent);
+        
+        
+        //Init FinanzenWebpageExtractor
+        FinanzenWebpageExtractor webpageExtractor = new FinanzenWebpageExtractor();
+        //Init FinanzenWebpageParser
+        FinanzenWebpageParser webpageParser = new FinanzenWebpageParser();
+        
+        ArrayList<Element> contentBoxList = webpageExtractor.extractContentBoxList(webStockDoc);   
+        // Init the tbodylist
+        tbodyList = new ArrayList<>();
+        // For each contentBoxList, get the tbody element 
+        for(Element contentBox: contentBoxList){
+        	// For each contentBox element, we extract the tbody element.
+        	Element tbody = webpageExtractor.extractTbodyElement(contentBox);
+        	// Put the tbody element into the list
+        	tbodyList.add(tbody);
+        }
+        
+        Element tbodyElement = null;
+        
+        // Parse the revenue.
+        // The revenue is in the third tbody
+        tbodyElement = tbodyList.get(2);
+        revenue = webpageParser.parseRevenue(tbodyElement);
+        
+        // Parse the years 
+        // year can be found in any tbody
+        tbodyElement = tbodyList.get(1);
+        years = webpageParser.parseYears(tbodyElement);
+        
+        // Parse the ebit
+        // ebit is in the third tbody
+        tbodyElement = tbodyList.get(2);
+        ebit = webpageParser.parseEbit(tbodyElement);
+        
+        // Parse the employee number
+        // The employee number can be found in the fifth tbody.
+        tbodyElement = tbodyList.get(4);
+        employeeNum = webpageParser.parseEmployeeNum(tbodyElement);
 	}
 	
 	
