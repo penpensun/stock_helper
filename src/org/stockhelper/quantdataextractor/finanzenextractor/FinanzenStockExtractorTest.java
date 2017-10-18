@@ -1,4 +1,4 @@
-package org.stockhelper.quantdataextractor.impl;
+package org.stockhelper.quantdataextractor.finanzenextractor;
 
 import static org.junit.Assert.*;
 

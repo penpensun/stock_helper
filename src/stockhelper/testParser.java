@@ -10,8 +10,7 @@ import java.net.URL;
 import java.net.MalformedURLException;
 import java.io.*;
 import org.jsoup.select.*;
-
-import structure.Company;
+import org.stockhelper.structure.Company;
 /**
  * This class test the parser of jsoup. The parser is resposible to extract stock information from http://www.finanzen.net/bilanz_guv/Wirecard
  * @author GGTTF

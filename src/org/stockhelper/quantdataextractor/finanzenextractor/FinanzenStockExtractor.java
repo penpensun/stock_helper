@@ -1,5 +1,4 @@
-package org.stockhelper.quantdataextractor.impl;
-import structure.Company;
+package org.stockhelper.quantdataextractor.finanzenextractor;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.*;
 import java.net.URL;
@@ -7,6 +6,7 @@ import java.net.MalformedURLException;
 import java.io.*;
 import org.jsoup.select.*;
 import org.stockhelper.quantdataextractor.QuantDataMiner;
+import org.stockhelper.structure.Company;
 
 import java.util.ArrayList;
 import java.net.URLConnection;
@@ -45,13 +45,14 @@ public class FinanzenStockExtractor implements QuantDataMiner{
 	private int[] years; // The years
 	private float[] prices;
 
+	
 	/**
 	 * 
 	 * @author: Peng Sun
 	 * @param url: The url of the website
 	 * @return: void
 	 */
-	public void parseWebpage(String urlString){	
+	public void parseWebpage(String urlString, boolean useProxy){	
 		//User HttpURLConnection to connect to the webpage
 		URL url = null;
 		try{
@@ -71,7 +72,8 @@ public class FinanzenStockExtractor implements QuantDataMiner{
 			e.printStackTrace();
 		}
 		//Read the webpage into a StingBuilder
-		StringBuilder webpageStrBuilder = new StringBuilder();
+		StringBuilder strBuilderWebpage = new StringBuilder();
+		
 		BufferedReader br = null;
 		try{
 			br = new BufferedReader(new InputStreamReader(urlConn.getInputStream()));
@@ -81,14 +83,14 @@ public class FinanzenStockExtractor implements QuantDataMiner{
 		String line= null;
 		try{
 			while((line =br.readLine())!= null)
-				webpageStrBuilder.append(line).append("\n");
+				strBuilderWebpage.append(line).append("\n");
 		}catch(IOException e){
 			e.printStackTrace();
 		}
 		
 		
 		//Parse the webpage by Jsoup
-        webStockDoc = Jsoup.parse(webpageStrBuilder.toString());
+        webStockDoc = Jsoup.parse(strBuilderWebpage.toString());
         
         
         //Init FinanzenWebpageExtractor
@@ -130,6 +132,20 @@ public class FinanzenStockExtractor implements QuantDataMiner{
         employeeNum = webpageParser.parseEmployeeNum(tbodyElement);
 	}
 
+	/**
+	 * This method parses the webpage content, assigns values to:
+	 * revenue,
+	 * ebit,
+	 * employeeNum,
+	 * years,
+	 * prices.
+	 * 
+	 * @param strWebpageContent
+	 */
+	public void parseWebpage2(String strWebpageContent){
+		
+	}
+	
 	
 	/**
 	 * This method returns the revenue
@@ -147,23 +163,11 @@ public class FinanzenStockExtractor implements QuantDataMiner{
 		return employeeNum;
 	}
 
-	@Override
-	public int[] getYears() {
-		
-		return years;
-	}
-
-
-	@Override
-	public float[] getPrices() {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
 
 	/**
 	 * This method parses the stock webpage and outputs the year array.
 	 */
+	@Deprecated
 	public float[] parseYearArray(){
 		float[] yearArray;
 		Element bguvFormElement = webStockDoc.getElementById("bguvform");
@@ -259,200 +263,14 @@ public class FinanzenStockExtractor implements QuantDataMiner{
 		new FinanzenStockExtractor().testConnect();
 	}
 
+
+	@Override
+	public void parseWebpage(String urlString) {
+		// TODO Auto-generated method stub
+		
+	}
+
 }
 
-
-/**
- * This class is responsible for pre-parse. 
- * The class FinanzenWebpageExtractor receives the Document object (contains GuV webpage) and returns
- * a list of <tbody>. 
- * 
- * @author penpen926
- *
- */
-
-class FinanzenWebpageExtractor{
-	/**
-	 * This method extracts the contentBox in the webpage.
-	 * The method receives the root element of the webpage and returns a list of 
-	 * <div class = "content"> elements.
-	 * @param doc
-	 * @return
-	 */
-	ArrayList<Element> extractContentBoxList(Document doc){
-		ArrayList<Element> contentBoxList;
-		// Parse the webpage and init the tbodylist
-        Element bguvFormElement = doc.getElementById("bguvform");
-        Elements mainElementList = bguvFormElement.getElementsByClass("main");
-        if(mainElementList.isEmpty())
-            throw new IllegalArgumentException("No main class found");
-        
-        // Get the list of "content tableQuote" elements.
-        contentBoxList = mainElementList.get(0).getElementsByClass("contentBox tableQuotes");
-        // Check the number of elements in contentTableQuoteElementList
-        if(contentBoxList.isEmpty())
-            throw new IllegalArgumentException("No content tableQuote class element found.");
-       
-        return contentBoxList;
-	}
-	
-	/**
-	 * This method extracts the tbody element within a contentBox.
-	 * The method receives the element of <div class = "content"> and returns the <tbody> within the element.
-	 * @param contentBox
-	 * @return
-	 */
-	Element extractTbodyElement(Element contentBox){
-		// First get the content element
-    	Elements contentList = contentBox.getElementsByClass("content");
-    	// Check the content element list.
-    	// check if the contentList is empty.
-    	if(contentList.isEmpty())
-            throw new IllegalArgumentException("No content class element found.");
-        // check if the contentList contains more than one "content" element. 
-    	if(contentList.size()>1)
-    		throw new IllegalArgumentException("More than one content class element are found.");
-    	
-    	// For the content element, we go further to the table element.
-    	Elements tableElementList = contentList.get(0).getElementsByTag("table");
-    	
-    	// check the table elemnent list
-    	// check if the table elemetn list is empty.
-    	if(tableElementList.isEmpty())
-    		throw new IllegalArgumentException("No table class found.");
-    	// check if the tableElementList contains more than one "table" element.
-    	if(tableElementList.size()>1)
-    		throw new IllegalArgumentException("More than one table element are found.");
-    	
-    	//Go further to tbody
-    	Elements tbodyElementList = tableElementList.get(0).getElementsByTag("tbody");
-    	
-    	// check the tbody element list
-    	// check if the tbody element list is empty.
-    	if(tbodyElementList.isEmpty())
-            throw new IllegalArgumentException ("No table tag element found.");
-        
-    	if(tbodyElementList.size()>1)
-    		throw new IllegalArgumentException("More than one table element are found.");
-    	
-    	return tbodyElementList.get(0);
-	}
-
-
-	
-}
-
-/**
- * This class contains the method parsing the content of the <tbody> element.
- * @author penpen926
- *
- */
-class FinanzenWebpageParser{
-	/**
-	 * This method receives the tbody element, parses the tbody element and returns
-	 * the float array of revenue.
-	 * Revenue:
-	 * @param tbody
-	 * @return
-	 */
-	public float[] parseRevenue(Element tbody){
-		//Get the tr element list.
-		ArrayList<Element> trElements = tbody.getElementsByTag("tr");
-		// Revenue (Umsatzerloese) is in the second row
-		Element revenueTr = trElements.get(1);
-		
-		//Get the list of td
-		ArrayList<Element> tdElements = revenueTr.getElementsByTag("td");
-		float[] revenue = new float[tdElements.size()-2];
-		// Starting from the third element, start parsing the revenue
-		for(int i=0;i<revenue.length;i++){
-			String revenueString = tdElements.get(i+2).text();
-			revenueString = revenueString.replaceAll("\\.", "");
-			revenueString = revenueString.replaceAll(",", "\\.");
-			revenue[i] = Float.parseFloat(revenueString);
-		}
-		return revenue;
-	}
-	
-	/**
-	 * This method receives the tbody element, parses the tbody element and returns the
-	 * integer array of years;
-	 * @param tbody
-	 * @return
-	 */
-	public int[] parseYears(Element tbody){
-		// Get the tr element list
-		ArrayList<Element> trElements = tbody.getElementsByTag("tr");
-		// The years are in the first row.
-		Element yearTr = trElements.get(0);
-		
-		// Get the list of td
-		ArrayList<Element> tdElements = yearTr.getElementsByTag("th");
-		System.out.println(tdElements.size());
-		int[] years = new int[tdElements.size()-2];
-		// Starting from the third element, start parsing the years.
-		for(int i=0;i<years.length;i++){
-			String yearTextString = tdElements.get(i+2).text();
-			years[i] = Integer.parseInt(yearTextString);
-		}
-		
-		return years;
-	}
-	
-	/**
-	 * Ebit. German word: Operatives Ergebnis
-	 * @param tbody
-	 * @return
-	 */
-	public float[] parseEbit(Element tbody){
-		// Get the tr element list
-		ArrayList<Element> trElements = tbody.getElementsByTag("tr");
-		
-		// The EBIT (Operative Ergebnis) is in the 6th row.
-		Element ebitTr = trElements.get(5);
-		
-		// Get the list of td
-		ArrayList<Element> tdElements = ebitTr.getElementsByTag("td");
-		float[] ebit = new float[tdElements.size()-2];
-		// Starting from the third element, start parsing the ebits;
-		for(int i=0;i<ebit.length;i++){
-			String ebitTextString = tdElements.get(i+2).text();
-			ebitTextString = ebitTextString.replaceAll("\\.", "");
-			ebitTextString = ebitTextString.replaceAll(",", "\\.");
-			ebit[i] = Float.parseFloat(ebitTextString);
-		}
-		return ebit;
-	}
-	
-	public float[] parsePrices(Element tbody){
-		float[] prices = null;
-		return prices;
-	}
-	
-	/**
-	 * This method receives the tbody element, parses the tbody element and returns the
-	 * integer array of employee numbers;
-	 * @param tbody
-	 * @return
-	 */
-	public int[] parseEmployeeNum(Element tbody){
-		// Get the tr element list
-		ArrayList<Element> trElements = tbody.getElementsByTag("tr");
-		// The employ number (Anzahl Mitarbeiter) is in the 8th row
-		Element employeeNumTr = trElements.get(7);
-		
-		//Get the list of td
-		ArrayList<Element> tdElements = employeeNumTr.getElementsByTag("td");
-		int[] employNum = new int[tdElements.size()-2];
-		//Starting from the third element, start parsing the employNum
-		for(int i=0;i<employNum.length;i++){
-			String employNumString  = tdElements.get(i+2).text();
-			employNumString = employNumString.replaceAll("\\.", "");
-			employNum[i] = Integer.parseInt(employNumString);
-		}
-		return employNum;
-	}
-	
-}
 
 
