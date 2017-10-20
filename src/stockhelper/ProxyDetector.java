@@ -32,7 +32,8 @@ public class ProxyDetector {
 	
 	public static void main(String args[]){
 		try{
-			connectURL();
+			//connectURL();
+			detectProxy(args);
 		}catch(Exception e){
 			e.printStackTrace();
 		}

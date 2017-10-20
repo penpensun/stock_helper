@@ -89,6 +89,7 @@ public class testParser {
         
     }
     
+    /*
     public void testExtractRevenue(){
     	Company s = new Company();
     	String url = "http://www.finanzen.net/bilanz_guv/Wirecard";
@@ -98,7 +99,8 @@ public class testParser {
     	for(int i=0;i<revenue.length;i++)
     		System.out.println(revenue[i]);
     }
+    */
     public static void main(String args[]){
-        new testParser().testExtractRevenue();
+       // new testParser().testExtractRevenue();
     }
 }

@@ -54,16 +54,7 @@ public class FinanzenStockExtractorTest {
 			assertEquals(ebitCorr[i], ebit[i], 0.001f);
 	}
 
-	@Test
-	public void testGetYears() {
-		System.out.println("Test get years");
-		int[] years = fse.getYears();
-		for(int i=0;i<years.length;i++)
-			System.out.print(years[i]+"  ");
-		System.out.println();
-		for(int i=0;i<years.length;i++)
-			assertEquals(yearsCorr[i], years[i]);
-	}
+	
 
 	public void testGetPrices(){
 		

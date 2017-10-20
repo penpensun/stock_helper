@@ -73,6 +73,7 @@ public class Company {
             throw new IllegalArgumentException("No td tag element found.");
         // The revenues are listed, starting from the 3rd element
         // convert the elements in revenuelist into array
+        /*
         revenue  = new float[revenueList.size()-2];
         try{
         	for(int i=0;i<revenue.length;i++)
@@ -81,6 +82,7 @@ public class Company {
         }catch(Exception e){
         	e.printStackTrace();
         }
+        */
 	}
 	
 	public void extractEquity(Element mainElement){

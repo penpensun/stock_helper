@@ -13,7 +13,6 @@ import java.net.URLConnection;
 import java.net.HttpURLConnection;
 import java.net.Proxy;
 import java.net.InetSocketAddress;
-import java.net.MalformedURLException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.BufferedReader;
@@ -142,9 +141,10 @@ public class FinanzenStockExtractor implements QuantDataMiner{
 	 * @return
 	 */
 	public String retrieveWebpage(String url){
-		// Check if in outer internet.
-		
+		String strWebContent = null;
+		return strWebContent;
 	}
+	
 	/**
 	 * This method parses the webpage content, assigns values to:
 	 * revenue,
