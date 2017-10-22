@@ -9,5 +9,6 @@ package org.stockhelper.quantdataextractor.finanzenextractor;
 public enum NetworkEnv {
 	OUTER_NETWORK,
 	BAYER_NETWORK,
-	NO_CONNECTION
+	NO_CONNECTION,
+	ILLEGAL_TARGET_URL
 }

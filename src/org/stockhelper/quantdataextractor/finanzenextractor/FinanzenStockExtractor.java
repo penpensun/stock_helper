@@ -11,6 +11,7 @@ import org.stockhelper.structure.Company;
 import java.util.ArrayList;
 import java.net.URLConnection;
 import java.net.HttpURLConnection;
+import javax.net.ssl.HttpsURLConnection;
 import java.net.Proxy;
 import java.net.InetSocketAddress;
 import java.io.InputStream;
@@ -64,9 +65,9 @@ public class FinanzenStockExtractor implements QuantDataMiner{
 		Proxy proxy = new Proxy(Proxy.Type.HTTP, new InetSocketAddress("10.185.190.100", 8080));
 		
 		// Get the connection
-		HttpURLConnection urlConn = null;
+		HttpsURLConnection urlConn = null;
 		try{
-			urlConn = (HttpURLConnection)url.openConnection(proxy);
+			urlConn = (HttpsURLConnection)url.openConnection(proxy);
 		}catch(IOException e){
 			e.printStackTrace();
 		}

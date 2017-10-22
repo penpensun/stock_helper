@@ -1,8 +1,9 @@
-package org.stockhelper.quantdataextractor.finanzenextractor;
+package org.stockhelper.quantdataextractor.finanzenextractor.test;
 
 import static org.junit.Assert.*;
 
 import org.junit.Test;
+import org.stockhelper.quantdataextractor.finanzenextractor.FinanzenStockExtractor;
 import org.junit.*;
 
 public class FinanzenStockExtractorTest {
