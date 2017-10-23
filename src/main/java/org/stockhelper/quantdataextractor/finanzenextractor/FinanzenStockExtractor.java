@@ -1,4 +1,5 @@
 package org.stockhelper.quantdataextractor.finanzenextractor;
+import org.apache.log4j.Logger;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.*;
 import java.net.URL;
@@ -13,6 +14,7 @@ import java.net.URLConnection;
 import java.net.HttpURLConnection;
 import javax.net.ssl.HttpsURLConnection;
 import java.net.Proxy;
+import java.net.Proxy.Type;
 import java.net.InetSocketAddress;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -34,6 +36,9 @@ import java.io.BufferedReader;
  */
 public class FinanzenStockExtractor implements QuantDataMiner{
 	Document webStockDoc = null;
+	FinanzenWebpageExtractor webpageExtractor = null;
+	FinanzenWebpageParser webpageParser = null;
+	private static Logger logger = Logger.getLogger(NetworkEnvChecker.class);
 	
 	
 	// the list of "tbody" elements on the webpage.
@@ -45,6 +50,19 @@ public class FinanzenStockExtractor implements QuantDataMiner{
 	private int[] years; // The years
 	private float[] prices;
 
+	/**
+	 * Constructor
+	 */
+	public FinanzenStockExtractor(String url, String proxyStr, int port) {
+		webpageExtractor = new FinanzenWebpageExtractor();
+		webpageParser = new FinanzenWebpageParser();
+		Proxy proxy = null;
+		// Create the proxy object if proxyStr is not null.
+		if(proxyStr != null)
+			proxy = new Proxy(Proxy.Type.HTTP, new InetSocketAddress(proxyStr, port));
+		// Send the url and proxy to parseWebpage, to init all parameters.
+		parseWebpage(url,proxy);
+	}
 	
 	/**
 	 * 
@@ -52,7 +70,7 @@ public class FinanzenStockExtractor implements QuantDataMiner{
 	 * @param url: The url of the website
 	 * @return: void
 	 */
-	public void parseWebpage(String urlString, boolean useProxy){	
+	public void parseWebpage(String urlString, Proxy proxy){	
 		//User HttpURLConnection to connect to the webpage
 		URL url = null;
 		try{
@@ -61,19 +79,21 @@ public class FinanzenStockExtractor implements QuantDataMiner{
 			e.printStackTrace();
 		}
 		
-		//Init the proxy
-		Proxy proxy = new Proxy(Proxy.Type.HTTP, new InetSocketAddress("10.185.190.100", 8080));
 		
 		// Get the connection
-		HttpsURLConnection urlConn = null;
+		HttpURLConnection urlConn = null;
 		try{
-			urlConn = (HttpsURLConnection)url.openConnection(proxy);
+			// if proxy is not null, then the connection is achieved through proxy
+			if(proxy != null)
+				urlConn = (HttpURLConnection)url.openConnection(proxy);
+			else
+				urlConn = (HttpURLConnection)url.openConnection();
+			
 		}catch(IOException e){
 			e.printStackTrace();
 		}
 		//Read the webpage into a StingBuilder
 		StringBuilder strBuilderWebpage = new StringBuilder();
-		
 		BufferedReader br = null;
 		try{
 			br = new BufferedReader(new InputStreamReader(urlConn.getInputStream()));
@@ -91,26 +111,22 @@ public class FinanzenStockExtractor implements QuantDataMiner{
 		
 		//Parse the webpage by Jsoup
         webStockDoc = Jsoup.parse(strBuilderWebpage.toString());
+        System.out.println(webStockDoc.toString());
         
         
-        //Init FinanzenWebpageExtractor
-        FinanzenWebpageExtractor webpageExtractor = new FinanzenWebpageExtractor();
-        //Init FinanzenWebpageParser
-        FinanzenWebpageParser webpageParser = new FinanzenWebpageParser();
-        
+        //Read all "contentBox" elements
         ArrayList<Element> contentBoxList = webpageExtractor.extractContentBoxList(webStockDoc);   
         // Init the tbodylist
         tbodyList = new ArrayList<>();
         // For each contentBoxList, get the tbody element 
         for(Element contentBox: contentBoxList){
-        	// For each contentBox element, we extract the tbody element.
-        	Element tbody = webpageExtractor.extractTbodyElement(contentBox);
-        	// Put the tbody element into the list
-        	tbodyList.add(tbody);
+	        	// For each contentBox element, we extract the tbody element.
+	        	Element tbody = webpageExtractor.extractTbodyElement(contentBox);
+	        	// Put the tbody element into the list
+	        	tbodyList.add(tbody);
         }
         
         Element tbodyElement = null;
-        
         // Parse the revenue.
         // The revenue is in the third tbody
         tbodyElement = tbodyList.get(2);
@@ -312,12 +328,6 @@ public class FinanzenStockExtractor implements QuantDataMiner{
 		
 		System.out.println(webContentTmp.toString());
 	}
-
-	
-	public static void main(String args[]){
-		new FinanzenStockExtractor().testConnect();
-	}
-
 
 	@Override
 	public void parseWebpage(String urlString) {

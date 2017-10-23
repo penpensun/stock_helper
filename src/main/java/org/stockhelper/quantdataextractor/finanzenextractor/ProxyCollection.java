@@ -11,9 +11,9 @@ import java.net.InetSocketAddress;
  *
  */
 public class ProxyCollection {
-	public static Proxy bayerProxy = null;
+	public static Proxy BAYER_PROXY = null;
 	static {
-		bayerProxy = new Proxy(Proxy.Type.HTTP, new InetSocketAddress("10.185.190.100", 8080));
+		BAYER_PROXY = new Proxy(Proxy.Type.HTTP, new InetSocketAddress("10.185.190.100", 8080));
 	}
 	
 	

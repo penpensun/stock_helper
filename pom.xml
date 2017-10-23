@@ -6,7 +6,6 @@
   <name>StockHelper</name>
   <description>An application to help to retrieve the stock info</description>
   <build>
-    <sourceDirectory>src</sourceDirectory>
     <plugins>
       <plugin>
         <artifactId>maven-compiler-plugin</artifactId>
