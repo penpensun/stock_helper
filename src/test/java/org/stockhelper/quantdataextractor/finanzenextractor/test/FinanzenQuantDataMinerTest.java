@@ -26,7 +26,10 @@ public class FinanzenQuantDataMinerTest {
 	private String companyID ="wirecard";
 
 	/**
-	 * Test for 
+	 * Test of revenue extracting method. 
 	 */
-	public 
+	@Test
+	public void testRevenue() {
+		
+	}
 }

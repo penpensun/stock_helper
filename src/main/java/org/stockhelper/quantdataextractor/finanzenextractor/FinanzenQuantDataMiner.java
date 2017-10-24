@@ -1,4 +1,5 @@
 package org.stockhelper.quantdataextractor.finanzenextractor;
+import org.apache.log4j.BasicConfigurator;
 import org.apache.log4j.Logger;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.*;
@@ -33,7 +34,7 @@ import java.net.InetSocketAddress;
  *
  */
 public class FinanzenQuantDataMiner implements FundamentalDataMiner{
-	private static Logger logger = Logger.getLogger(NetworkEnvChecker.class);
+	private static Logger logger = Logger.getLogger(FinanzenQuantDataMiner.class);
 	private static final String GUV_WEB_PREFIX = "http://www.finanzen.net/bilanz_guv/";
 	
 	
@@ -46,7 +47,7 @@ public class FinanzenQuantDataMiner implements FundamentalDataMiner{
 	
 	// The start and end markers for "operatives Ergebnis"
 	private static final String EBIT_START_MARKER = "<td class=\"font-bold\">Operatives Ergebnis</td>";
-	private static final String EBIE_END_MARKER="</tr>";
+	private static final String EBIT_END_MARKER="</tr>";
 	
 	// The start and end markers for "bilanzsumme"
 	private static final String TOTAL_ASSET_START_MARKER = "<td class=\"font-bold\">Bilanzsumme</td>";
@@ -143,6 +144,9 @@ public class FinanzenQuantDataMiner implements FundamentalDataMiner{
 	 */
 	protected int[] getMatchStartEndIndex(String startMarker, String endMarker, String webContent){
 		int matchStart = webContent.indexOf(startMarker);
+		logger.debug("matchstart:");
+		//logger.debug(matchStart);
+		//logger.debug(startMarker);
 		int matchEnd = webContent.substring(matchStart).indexOf(endMarker)+matchStart-5;
 		int[] matchStartEndIndex = new int[2];
 		matchStartEndIndex[0] = matchStart;
@@ -156,7 +160,7 @@ public class FinanzenQuantDataMiner implements FundamentalDataMiner{
 	 * This method parses the float data from the matched string.
 	 * For example:
 	 * the matched String is: 
-	 * <td class="font-bold">Umsatzerlöse</td>
+	 * <td class="font-bold">Umsatzerlï¿½se</td>
 	 * <td>271,62</td>
 	 * <td>324,80</td>
 	 * <td>394,60</td>
@@ -174,7 +178,7 @@ public class FinanzenQuantDataMiner implements FundamentalDataMiner{
 		float[] data = new float[split.length-1];
 		String dataString = null;
 		for(int i=0;i<data.length;i++){
-			dataString = split[i].replace(".", "").replace(",", ".");
+			dataString = split[i+1].replace(".", "").replace(",", ".");
 			data[i] = Float.parseFloat(dataString);
 			dataString = null;
 		}
@@ -203,7 +207,7 @@ public class FinanzenQuantDataMiner implements FundamentalDataMiner{
 		int[] data = new int[split.length-1];
 		String dataString = null;
 		for(int i=0;i<data.length;i++){
-			dataString = split[i].replace(".","");
+			dataString = split[i+1].replace(".","");
 			data[i] = Integer.parseInt(dataString);
 			dataString= null;
 		}
@@ -232,38 +236,86 @@ public class FinanzenQuantDataMiner implements FundamentalDataMiner{
 	protected int[] parseYear(String matchedString){
 		String[] split =  matchedString.split("</th><th>");
 		int[] years = new int[split.length-1];
-		String dataString = null;
-		for(int i=0;i<years.length;i++){
-			years[i] = Integer.parseInt(dataString);
-			dataString = null;
-		}
+		for(int i=0;i<years.length;i++)
+			years[i] = Integer.parseInt(split[i+1]);
+		
 		return years;
 	}
 
 	
 	/**
-	 * This method extracts the revenue from finanzen.net webpage, based on the companyID
-	 * @return
+	 * This method extracts the revenue from finanzen.net webpage, given the parameter of web content
+	 * in the form of string.
+	 * @param webcontentString: the whole web content in form of String.
+	 * @return the float array of revenues.
 	 */
 	public float[] extractRevenue(String webcontentString){
-		
-		
+		int[] revenueMatchStartEnd = getMatchStartEndIndex(REVENUE_START_MARKER, REVENUE_END_MARKER,
+				webcontentString);
+		return parseFloatData(webcontentString.substring(revenueMatchStartEnd[0], revenueMatchStartEnd[1]));
 	}
 	
+	/**
+	 * This method extracts the total asset from finanzen.net webpage, given the parameter of web content
+	 * in the form of string.
+	 * @param webcontentString: the whole web content in form of String.
+	 * @return the float array of total assets.
+	 */
 	public float[] extractTotalAsset(String webcontentString){
-		
+		int[] totalAssetMatchStartEnd = getMatchStartEndIndex(TOTAL_ASSET_START_MARKER, TOTAL_ASSET_END_MARKER,
+				webcontentString);
+		return parseFloatData(webcontentString.substring(totalAssetMatchStartEnd[0], totalAssetMatchStartEnd[1]));
+				
 	}
 	
+	/**
+	 * This method extracts the ebit from finanzen.net webpage, given the parameter of web content
+	 * in the form of string.
+	 * @param webcontentString: the whole web content in form of String.
+	 * @return the float array of ebits.
+	 */
 	public float[] extractEbit(String webcontentString){
+		int[] ebitMatchStartEnd = getMatchStartEndIndex(EBIT_START_MARKER, EBIT_END_MARKER,
+				webcontentString);
 		
+		logger.debug("substring of web content string:");
+		logger.debug(webcontentString.substring(ebitMatchStartEnd[0], ebitMatchStartEnd[1]));
+		return parseFloatData(webcontentString.substring(ebitMatchStartEnd[0], ebitMatchStartEnd[1]));
 	}
 	
+	
+	/**
+	 * This method extracts the employee number from finanzen.net webpage, given the parameter of web content
+	 * in the form of string.
+	 * @param webcontentString: the whole web content in form of String.
+	 * @return the int array of employee number.
+	 */
 	public int[] extractEmployeeNum(String webcontentString){
-		
+		int[] employeeNumMatchStartEnd = getMatchStartEndIndex(EMPLOYEE_NUM_START_MARKER, EMPLOYEE_NUM_END_MARKER,
+				webcontentString);
+		return parseIntegerData(webcontentString.substring(employeeNumMatchStartEnd[0], employeeNumMatchStartEnd[1]));
 	}
 	
-	public YearMonth parseYearMonth(int year){
+	
+	/**
+	 * This method extracts years from finanzen.net webpage, given the parameter of web content
+	 * in the form of string.
+	 * @param webcontentString: the whole web content in form of String.
+	 * @return
+	 */
+	public YearMonth[] parseYearMonth(String webcontentString){
+		int[] yearMatchStartEnd = getMatchStartEndIndex(YEAR_START_MARKER, YEAR_END_MARKER,
+				webcontentString);
 		
+		int[] years = parseYear(webcontentString.substring(yearMatchStartEnd[0], yearMatchStartEnd[1]));
+		
+		YearMonth[] toReturn = new YearMonth[years.length];
+		
+		for(int i=0;i<toReturn.length;i++) {
+			toReturn[i] = YearMonth.of(years[i], 12);
+		}
+		
+		return toReturn;
 	}
 	
 	
@@ -282,19 +334,7 @@ public class FinanzenQuantDataMiner implements FundamentalDataMiner{
 	private int[] years; // The years
 	private float[] prices;
 
-	/**
-	 * Constructor
-	 */
-	public FinanzenQuantDataMiner(String url, String proxyStr, int port) {
-		webpageExtractor = new FinanzenWebpageExtractor();
-		webpageParser = new FinanzenWebpageParser();
-		Proxy proxy = null;
-		// Create the proxy object if proxyStr is not null.
-		if(proxyStr != null)
-			proxy = new Proxy(Proxy.Type.HTTP, new InetSocketAddress(proxyStr, port));
-		// Send the url and proxy to parseWebpage, to init all parameters.
-		parseWebpage(url,proxy);
-	}
+	
 	
 	/**
 	 * 
@@ -562,7 +602,45 @@ public class FinanzenQuantDataMiner implements FundamentalDataMiner{
 	}
 
 
+	/**
+	 * for testing
+	 * @param args
+	 */
+	public static void main(String args[]) {
+		BasicConfigurator.configure();
+		String companyID = "wirecard";
+		
+		Proxy proxy = null;
+		//proxy = ProxyCollection.BAYER_PROXY;
+		
+		FinanzenQuantDataMiner dataMiner = new FinanzenQuantDataMiner();
+		String webcontentString = dataMiner.getWebpageContent(
+				new StringBuilder(GUV_WEB_PREFIX).append(companyID).toString(), proxy);
+		float[] ebit = new FinanzenQuantDataMiner().extractEbit(webcontentString);
+		
+		logger.debug("For test: output the ebit");
+		
+		for(int i=0;i<ebit.length;i++)
+			logger.debug(ebit[i]);
+		
+		float[] revenue = new FinanzenQuantDataMiner().extractRevenue(webcontentString);
+				
+		logger.debug("For test: output the revenue");
+		
+		for(int i=0;i<revenue.length;i++)
+			logger.debug(revenue[i]);
+		
+		
+		int[] employeeNum = new FinanzenQuantDataMiner().extractEmployeeNum(webcontentString);
+		logger.debug("For test: output the employee number.");
+		
+		for(int i=0;i<employeeNum.length;i++){
+			logger.debug(employeeNum[i]);
+		}
+	}
 }
+
+
 
 
 
