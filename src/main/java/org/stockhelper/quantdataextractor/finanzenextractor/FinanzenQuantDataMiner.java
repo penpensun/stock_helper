@@ -6,8 +6,9 @@ import java.net.URL;
 import java.net.MalformedURLException;
 import java.io.*;
 import org.jsoup.select.*;
-import org.stockhelper.quantdataextractor.QuantDataMiner;
+import org.stockhelper.quantdataextractor.FundamentalDataMiner;
 import org.stockhelper.structure.Company;
+import java.time.YearMonth;
 
 import java.util.ArrayList;
 import java.net.URLConnection;
@@ -16,9 +17,6 @@ import javax.net.ssl.HttpsURLConnection;
 import java.net.Proxy;
 import java.net.Proxy.Type;
 import java.net.InetSocketAddress;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.BufferedReader;
 
 /**
  * This class extracts the content of the GuV webpage.
@@ -34,11 +32,245 @@ import java.io.BufferedReader;
  * @author penpen926
  *
  */
-public class FinanzenStockExtractor implements QuantDataMiner{
+public class FinanzenQuantDataMiner implements FundamentalDataMiner{
+	private static Logger logger = Logger.getLogger(NetworkEnvChecker.class);
+	private static final String GUV_WEB_PREFIX = "http://www.finanzen.net/bilanz_guv/";
+	
+	
+	private static final String REVENUE_START_MARKER = "<td class=\"font-bold\">Umsatzerl";
+	private static final String REVENUE_END_MARKER = "</tr>";
+	
+	// The start and end markers for "anzahln Mitarbeiter"
+	private static final String EMPLOYEE_NUM_START_MARKER = "<td class=\"font-bold\">Anzahl Mitarbeiter</td>";
+	private static final String EMPLOYEE_NUM_END_MARKER = "</tr>";
+	
+	// The start and end markers for "operatives Ergebnis"
+	private static final String EBIT_START_MARKER = "<td class=\"font-bold\">Operatives Ergebnis</td>";
+	private static final String EBIE_END_MARKER="</tr>";
+	
+	// The start and end markers for "bilanzsumme"
+	private static final String TOTAL_ASSET_START_MARKER = "<td class=\"font-bold\">Bilanzsumme</td>";
+	private static final String TOTAL_ASSET_END_MARKER = "</tr>";
+	
+	// The start and end markers for years
+	private static final String YEAR_START_MARKER = "<th>Chart</th>";
+	private static final String YEAR_END_MARKER = "</tr>";
+
+	
+	
+	/**
+	 * Implements the method in QuantDataMiner
+	 * 
+	 * Given a company id, this method extracts fundamental analytic data from
+	 * www.finanzen.net.
+	 * The fundamental analytic data includes:
+	 * 1. revenue
+	 * 2. kgv
+	 * 3. ebit
+	 * 4. employeeNum
+	 * 5. totalAsset
+	 * 
+	 * and the corresponding years.
+	 * 
+	 * @param companyID
+	 * @return
+	 */
+	public Company extractCompanyFundamentalData(String companyID){
+		Company companyObj = null;
+		
+		
+		
+		return companyObj;
+	}
+	
+	
+	/**
+	 * This method returns the content of the webpage of the given url, with proxy (when necessary)
+	 * The returned content is in the form of String.
+	 * @param url
+	 * @param proxy
+	 * @return
+	 */
+	protected String getWebpageContent(String url, Proxy proxy) {
+		
+		URL urlObj = null;
+		try {
+			urlObj = new URL(url);
+		}catch(MalformedURLException e){
+			logger.error("Illegal url.");
+		}
+		InputStreamReader inr = null;
+		BufferedReader br = null;
+		try{
+			if(proxy!= null)
+				inr = new InputStreamReader(urlObj.openConnection(proxy).getInputStream());
+			else
+				inr = new InputStreamReader(urlObj.openConnection().getInputStream());
+			
+			br = new BufferedReader(inr);
+		}catch(IOException e){
+			logger.error("Webpage open error.");
+		}
+		
+		String line = null;
+		StringBuilder webpageContentBuilder = new StringBuilder();
+		try{
+			while((line = br.readLine())!=null){
+				webpageContentBuilder.append(line).append("\n");
+			}	
+		}catch(IOException e){
+			logger.error("Webpage reading error.");
+		}
+		return webpageContentBuilder.toString();
+	}
+	
+	/**
+	 * This method returns the:
+	 * match start: the start of the "data matching"
+	 * match end: the end of the "data matching" 
+	 * of a certain "data matching marker".
+	 * 
+	 * For example, to get the revenue (umsatzerloese):
+	 * data matching marker: <td class=\"font-bold\">Umsatzerl
+	 * data start marker: <td class=\"font-bold\">Umsatzerl
+	 * data end marker: </tr>
+	 * 
+	 * 
+	 * @param startMarker
+	 * @param endMarker
+	 * @param webContent
+	 * @return
+	 */
+	protected int[] getMatchStartEndIndex(String startMarker, String endMarker, String webContent){
+		int matchStart = webContent.indexOf(startMarker);
+		int matchEnd = webContent.substring(matchStart).indexOf(endMarker)+matchStart-5;
+		int[] matchStartEndIndex = new int[2];
+		matchStartEndIndex[0] = matchStart;
+		matchStartEndIndex[1] = matchEnd;
+		
+		return matchStartEndIndex;
+	}
+	
+	
+	/**
+	 * This method parses the float data from the matched string.
+	 * For example:
+	 * the matched String is: 
+	 * <td class="font-bold">Umsatzerlöse</td>
+	 * <td>271,62</td>
+	 * <td>324,80</td>
+	 * <td>394,60</td>
+	 * <td>481,74</td>
+	 * <td>601,03</td>
+	 * <td>771,34</td>
+	 * <td>1.028,36
+	 * 
+	 * The returned value will be:
+	 * {271.62, 324.80, 394.60, 481.74, 601.03, 771.34, 1028.36}
+	 * @return
+	 */
+	protected float[] parseFloatData(String matchedString){
+		String[] split = matchedString.split("</td><td>");
+		float[] data = new float[split.length-1];
+		String dataString = null;
+		for(int i=0;i<data.length;i++){
+			dataString = split[i].replace(".", "").replace(",", ".");
+			data[i] = Float.parseFloat(dataString);
+			dataString = null;
+		}
+		return data;
+	}
+	
+	
+	/**
+	 * This method parses the integer data from the matched string.
+	 * For example:
+	 * <td class="font-bold">Anzahl Mitarbeiter</td>
+	 * <td>500</td>
+	 * <td>498</td>
+	 * <td>674</td>
+	 * <td>1.025</td>
+	 * <td>1.750</td>
+	 * <td>2.300</td>
+	 * <td>3.766
+	 * 
+	 * The returned values will be:
+	 * {500, 498, 674, 1025, 1750, 2300, 3766}
+	 * @return
+	 */
+	protected int[] parseIntegerData(String matchedString){
+		String[] split = matchedString.split("</td><td>");
+		int[] data = new int[split.length-1];
+		String dataString = null;
+		for(int i=0;i<data.length;i++){
+			dataString = split[i].replace(".","");
+			data[i] = Integer.parseInt(dataString);
+			dataString= null;
+		}
+		return data;
+	}
+	
+	/**
+	 * This method parses the years from the matched String.
+	 * for example:
+	 * <th>Chart</th>
+	 * <th></th>
+	 * <th>2010</th>
+	 * <th>2011</th>
+	 * <th>2012</th>
+	 * <th>2013</th>
+	 * <th>2014</th>
+	 * <th>2015</th>
+	 * <th>2016
+	 * 
+	 * The returned values will be:
+	 * {2010,2011, 2012, 2013, 2014, 2015, 2016}
+	 * 
+	 * @param matchedString
+	 * @return
+	 */
+	protected int[] parseYear(String matchedString){
+		String[] split =  matchedString.split("</th><th>");
+		int[] years = new int[split.length-1];
+		String dataString = null;
+		for(int i=0;i<years.length;i++){
+			years[i] = Integer.parseInt(dataString);
+			dataString = null;
+		}
+		return years;
+	}
+
+	
+	/**
+	 * This method extracts the revenue from finanzen.net webpage, based on the companyID
+	 * @return
+	 */
+	public float[] extractRevenue(String webcontentString){
+		
+		
+	}
+	
+	public float[] extractTotalAsset(String webcontentString){
+		
+	}
+	
+	public float[] extractEbit(String webcontentString){
+		
+	}
+	
+	public int[] extractEmployeeNum(String webcontentString){
+		
+	}
+	
+	public YearMonth parseYearMonth(int year){
+		
+	}
+	
+	
+	
 	Document webStockDoc = null;
 	FinanzenWebpageExtractor webpageExtractor = null;
 	FinanzenWebpageParser webpageParser = null;
-	private static Logger logger = Logger.getLogger(NetworkEnvChecker.class);
 	
 	
 	// the list of "tbody" elements on the webpage.
@@ -53,7 +285,7 @@ public class FinanzenStockExtractor implements QuantDataMiner{
 	/**
 	 * Constructor
 	 */
-	public FinanzenStockExtractor(String url, String proxyStr, int port) {
+	public FinanzenQuantDataMiner(String url, String proxyStr, int port) {
 		webpageExtractor = new FinanzenWebpageExtractor();
 		webpageParser = new FinanzenWebpageParser();
 		Proxy proxy = null;
@@ -329,11 +561,6 @@ public class FinanzenStockExtractor implements QuantDataMiner{
 		System.out.println(webContentTmp.toString());
 	}
 
-	@Override
-	public void parseWebpage(String urlString) {
-		// TODO Auto-generated method stub
-		
-	}
 
 }
 
